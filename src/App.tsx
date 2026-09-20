@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Navbar } from './components/Navbar';
+import { MobileBottomNavbar } from './components/MobileBottomNavbar';
 import { SearchEngineHero } from './components/SearchEngineHero';
 import { RecentlyWatchedSection } from './components/RecentlyWatchedSection';
 import { AnimeDetail } from './components/AnimeDetail';
@@ -102,8 +103,8 @@ export function App() {
   );
 
   return (
-    <div className="min-h-screen bg-[#000000] text-[#ededed] font-sans flex flex-col justify-between selection:bg-white selection:text-black">
-      {/* Navbar */}
+    <div className="min-h-screen bg-[#000000] text-[#ededed] font-sans flex flex-col justify-between selection:bg-white selection:text-black w-full max-w-full overflow-x-hidden pb-16 md:pb-0">
+      {/* Top Navbar */}
       <Navbar
         currentView={currentView}
         onNavigate={handleNavigate}
@@ -112,7 +113,7 @@ export function App() {
       />
 
       {/* Main Content Router */}
-      <main className="flex-1">
+      <main className="flex-1 w-full max-w-full overflow-x-hidden">
         
         {/* VIEW: HOME / SEARCH ENGINE */}
         {currentView === 'home' && (
@@ -422,6 +423,13 @@ export function App() {
         )}
 
       </main>
+
+      {/* Fixed Mobile Bottom Navbar */}
+      <MobileBottomNavbar
+        currentView={currentView}
+        onNavigate={handleNavigate}
+        onFocusSearch={handleFocusSearch}
+      />
 
       {/* Footer */}
       <Footer onNavigate={handleNavigate} />

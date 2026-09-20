@@ -15,26 +15,21 @@ export const Navbar: React.FC<NavbarProps> = ({
   animeCount,
 }) => {
   return (
-    <header className="sticky top-0 z-50 bg-[#000000]/90 backdrop-blur-md border-b border-[#1f1f1f]">
+    <header className="sticky top-0 z-50 bg-[#000000]/90 backdrop-blur-md border-b border-[#1f1f1f] w-full max-w-full overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14 gap-4">
+        <div className="flex items-center justify-between h-14 gap-2 sm:gap-4">
           
           {/* Vercel Style Logo */}
           <div 
             onClick={() => onNavigate('home')}
-            className="flex items-center gap-2.5 cursor-pointer group select-none shrink-0"
+            className="flex items-center gap-2 cursor-pointer group select-none shrink-0 min-w-0"
           >
-            <div className="w-7 h-7 bg-white text-black flex items-center justify-center font-extrabold text-sm rounded-sm group-hover:bg-neutral-200 transition-colors shadow-sm">
+            <div className="w-7 h-7 bg-white text-black flex items-center justify-center font-extrabold text-sm rounded-sm group-hover:bg-neutral-200 transition-colors shadow-sm shrink-0">
               ▲
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold tracking-tight text-white group-hover:text-neutral-300 transition-colors">
-                TurkAnime<span className="text-neutral-400 font-normal">Mirror</span>
-              </span>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-sm bg-[#171717] border border-[#262626] text-neutral-400 uppercase tracking-widest">
-                VERCEL SEARCH
-              </span>
-            </div>
+            <span className="text-sm font-bold tracking-tight text-white group-hover:text-neutral-300 transition-colors truncate">
+              TurkAnime<span className="text-neutral-400 font-normal">Mirror</span>
+            </span>
           </div>
 
           {/* Quick Search Trigger Input Button */}
@@ -51,8 +46,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </button>
 
-          {/* Navigation Links */}
-          <nav className="flex items-center gap-1 sm:gap-2">
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex items-center gap-1 sm:gap-2">
             <button
               onClick={() => onNavigate('home')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
@@ -62,7 +57,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Search className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Arama Engine</span>
+              <span>Arama</span>
             </button>
 
             <button
@@ -74,7 +69,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Film className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Katalog</span>
+              <span>Katalog</span>
             </button>
 
             <button
@@ -86,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <History className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">İzlenenler</span>
+              <span>İzlenenler</span>
             </button>
 
             <button
@@ -98,12 +93,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Heart className="w-3.5 h-3.5 text-rose-500" />
-              <span className="hidden sm:inline">Favoriler</span>
+              <span>Favoriler</span>
             </button>
           </nav>
 
           {/* API Status Badge */}
-          <div className="hidden lg:flex items-center gap-2 pl-3 border-l border-[#1f1f1f] text-[11px] font-mono">
+          <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-[#1f1f1f] text-[11px] font-mono shrink-0">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-neutral-400">
               {animeCount > 0 ? `${animeCount} Anime` : 'API Online'}

@@ -42,6 +42,15 @@ const episodesCache = new Map<string, EpisodeTuple[]>();
 const playerCache = new Map<string, PlayerSource[]>();
 const aniListCache = new Map<string, AniListMedia | null>();
 
+// Queue structures for auto-batching AniList GraphQL queries
+interface PendingRequest {
+  term: string;
+  resolve: (media: AniListMedia | null) => void;
+}
+
+let pendingBatchQueue: PendingRequest[] = [];
+let batchTimer: ReturnType<typeof setTimeout> | null = null;
+
 // Format slug to readable title e.g. "solo-leveling-season-2" -> "Solo Leveling Season 2"
 export const slugToTitle = (slug: string): string => {
   if (!slug) return '';
@@ -52,74 +61,158 @@ export const slugToTitle = (slug: string): string => {
 };
 
 /**
- * Fetch anime cover image & banner directly from AniList GraphQL API
+ * Executes a batched GraphQL query for multiple search terms in ONE single HTTP request
+ * Uses GraphQL query aliases (a0, a1, a2...) to eliminate Rate Limit (429) errors.
  */
-export const fetchAniListMedia = async (searchTerm: string): Promise<AniListMedia | null> => {
-  if (!searchTerm) return null;
-  const cleanTerm = searchTerm.trim();
+export const fetchAniListBatchMedia = async (
+  searchTerms: string[]
+): Promise<Map<string, AniListMedia | null>> => {
+  const results = new Map<string, AniListMedia | null>();
+  if (!searchTerms || searchTerms.length === 0) return results;
 
-  if (aniListCache.has(cleanTerm)) {
-    return aniListCache.get(cleanTerm)!;
+  // Filter terms that need to be fetched (not in memory or localStorage cache)
+  const termsToFetch: string[] = [];
+  
+  for (const rawTerm of searchTerms) {
+    if (!rawTerm) continue;
+    const cleanTerm = rawTerm.trim();
+    if (aniListCache.has(cleanTerm)) {
+      results.set(cleanTerm, aniListCache.get(cleanTerm)!);
+      continue;
+    }
+
+    const storageKey = `anilist_cover_${cleanTerm.toLowerCase()}`;
+    try {
+      const cached = localStorage.getItem(storageKey);
+      if (cached) {
+        const parsed: AniListMedia = JSON.parse(cached);
+        aniListCache.set(cleanTerm, parsed);
+        results.set(cleanTerm, parsed);
+        continue;
+      }
+    } catch (e) {}
+
+    termsToFetch.push(cleanTerm);
   }
 
-  // Check localStorage cache to speed up repeated queries across sessions
+  if (termsToFetch.length === 0) {
+    return results;
+  }
+
+  // Deduplicate terms to fetch
+  const uniqueTermsToFetch = Array.from(new Set(termsToFetch));
+
+  // Chunk requests into batches of max 20 per GraphQL request to stay well within query complexity limits
+  const CHUNK_SIZE = 20;
+
+  for (let i = 0; i < uniqueTermsToFetch.length; i += CHUNK_SIZE) {
+    const chunk = uniqueTermsToFetch.slice(i, i + CHUNK_SIZE);
+    const fields = chunk.map((term, idx) => {
+      const safeTerm = term.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      return `a${idx}: Media(search: "${safeTerm}", type: ANIME) { title { romaji english } coverImage { extraLarge large } bannerImage }`;
+    });
+
+    const query = `query { ${fields.join(' ')} }`;
+
+    try {
+      const response = await fetch('https://graphql.anilist.co/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      if (!response.ok) throw new Error(`AniList HTTP status ${response.status}`);
+      const json = await response.json();
+      const dataObj = json?.data || {};
+
+      chunk.forEach((term, idx) => {
+        const mediaItem: AniListMedia | null = dataObj[`a${idx}`] || null;
+        aniListCache.set(term, mediaItem);
+        results.set(term, mediaItem);
+
+        if (mediaItem) {
+          try {
+            localStorage.setItem(
+              `anilist_cover_${term.toLowerCase()}`,
+              JSON.stringify(mediaItem)
+            );
+          } catch (e) {}
+        }
+      });
+    } catch (err) {
+      console.error('AniList batch fetch error:', err);
+      chunk.forEach((term) => {
+        aniListCache.set(term, null);
+        results.set(term, null);
+      });
+    }
+  }
+
+  return results;
+};
+
+// Process accumulated pending requests in microtask batch
+const processPendingBatch = async () => {
+  if (pendingBatchQueue.length === 0) return;
+
+  const currentQueue = [...pendingBatchQueue];
+  pendingBatchQueue = [];
+  batchTimer = null;
+
+  // Group resolvers by search term
+  const termResolvers = new Map<string, Array<(media: AniListMedia | null) => void>>();
+
+  currentQueue.forEach(({ term, resolve }) => {
+    if (!termResolvers.has(term)) {
+      termResolvers.set(term, []);
+    }
+    termResolvers.get(term)!.push(resolve);
+  });
+
+  const terms = Array.from(termResolvers.keys());
+  const batchResults = await fetchAniListBatchMedia(terms);
+
+  terms.forEach((term) => {
+    const media = batchResults.get(term) || null;
+    const resolvers = termResolvers.get(term) || [];
+    resolvers.forEach((r) => r(media));
+  });
+};
+
+/**
+ * Fetch anime cover image & banner directly from AniList GraphQL API.
+ * Automatically queues and batches requests made within the same tick/frame to prevent 429 Rate Limit.
+ */
+export const fetchAniListMedia = (searchTerm: string): Promise<AniListMedia | null> => {
+  if (!searchTerm) return Promise.resolve(null);
+  const cleanTerm = searchTerm.trim();
+
+  // 1. Check in-memory cache
+  if (aniListCache.has(cleanTerm)) {
+    return Promise.resolve(aniListCache.get(cleanTerm)!);
+  }
+
+  // 2. Check localStorage cache
   const storageKey = `anilist_cover_${cleanTerm.toLowerCase()}`;
   try {
     const cached = localStorage.getItem(storageKey);
     if (cached) {
       const parsed: AniListMedia = JSON.parse(cached);
       aniListCache.set(cleanTerm, parsed);
-      return parsed;
+      return Promise.resolve(parsed);
     }
-  } catch (e) {
-    // Ignore localStorage errors
-  }
+  } catch (e) {}
 
-  const query = `
-    query ($search: String) {
-      Media(search: $search, type: ANIME) {
-        title {
-          romaji
-          english
-        }
-        coverImage {
-          extraLarge
-          large
-        }
-        bannerImage
-      }
+  // 3. Queue for auto-batched single GraphQL POST request
+  return new Promise((resolve) => {
+    pendingBatchQueue.push({ term: cleanTerm, resolve });
+    if (!batchTimer) {
+      batchTimer = setTimeout(processPendingBatch, 30);
     }
-  `;
-
-  try {
-    const response = await fetch('https://graphql.anilist.co/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({
-        query,
-        variables: { search: cleanTerm },
-      }),
-    });
-
-    if (!response.ok) throw new Error(`AniList HTTP status ${response.status}`);
-    const json = await response.json();
-    const media: AniListMedia | null = json?.data?.Media || null;
-
-    aniListCache.set(cleanTerm, media);
-    if (media) {
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(media));
-      } catch (e) {}
-    }
-    return media;
-  } catch (err) {
-    console.error(`AniList fetch error for "${cleanTerm}":`, err);
-    aniListCache.set(cleanTerm, null);
-    return null;
-  }
+  });
 };
 
 // Fetch full list of anime slugs e.g. ["0-saiji-start-dash-monogatari", ...]
