@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  
+  body {
+    background-color: #000000;
+    color: #ededed;
+    font-family: -apple-system, BlinkMacSystemFont, 'Geist', 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  /* Vercel Grid Dot Background */
+  .bg-vercel-grid {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Custom sharp scrollbars */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #000000;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #262626;
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #404040;
+  }
+}
+
+/* Vercel Glow Animations */
+@keyframes vercel-glow {
+  0%, 100% {
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 20px rgba(0, 112, 243, 0.15);
+  }
+  50% {
+    border-color: rgba(0, 112, 243, 0.6);
+    box-shadow: 0 0 35px rgba(0, 112, 243, 0.3);
+  }
+}
+
+.vercel-search-focus:focus-within {
+  animation: vercel-glow 3s infinite ease-in-out;
+}
+
+.vercel-card {
+  background-color: #0a0a0a;
+  border: 1px solid #1f1f1f;
+  transition: all 0.2s ease-in-out;
+}
+
+.vercel-card:hover {
+  border-color: #404040;
+  background-color: #121212;
+}
+
+/* Hide scrollbar for clean horizontal scrolls */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

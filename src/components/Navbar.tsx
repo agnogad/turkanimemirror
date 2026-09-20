@@ -1,0 +1,117 @@
+import React from 'react';
+import { Search, Heart, History, Film, Command } from 'lucide-react';
+
+interface NavbarProps {
+  currentView: string;
+  onNavigate: (view: string) => void;
+  onFocusSearch: () => void;
+  animeCount: number;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({
+  currentView,
+  onNavigate,
+  onFocusSearch,
+  animeCount,
+}) => {
+  return (
+    <header className="sticky top-0 z-50 bg-[#000000]/90 backdrop-blur-md border-b border-[#1f1f1f]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 gap-4">
+          
+          {/* Vercel Style Logo */}
+          <div 
+            onClick={() => onNavigate('home')}
+            className="flex items-center gap-2.5 cursor-pointer group select-none shrink-0"
+          >
+            <div className="w-7 h-7 bg-white text-black flex items-center justify-center font-extrabold text-sm rounded-sm group-hover:bg-neutral-200 transition-colors shadow-sm">
+              ▲
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold tracking-tight text-white group-hover:text-neutral-300 transition-colors">
+                TurkAnime<span className="text-neutral-400 font-normal">Mirror</span>
+              </span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-sm bg-[#171717] border border-[#262626] text-neutral-400 uppercase tracking-widest">
+                VERCEL SEARCH
+              </span>
+            </div>
+          </div>
+
+          {/* Quick Search Trigger Input Button */}
+          <button
+            onClick={onFocusSearch}
+            className="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-md bg-[#0a0a0a] border border-[#262626] hover:border-[#404040] text-xs text-neutral-400 hover:text-white transition-all max-w-sm w-full"
+          >
+            <Search className="w-3.5 h-3.5 text-neutral-500" />
+            <span className="flex-1 text-left truncate">
+              Anime veya bölüm ara...
+            </span>
+            <div className="flex items-center gap-1 font-mono text-[10px] text-neutral-500 bg-[#171717] px-1.5 py-0.5 rounded border border-[#262626]">
+              <Command className="w-2.5 h-2.5" /> K
+            </div>
+          </button>
+
+          {/* Navigation Links */}
+          <nav className="flex items-center gap-1 sm:gap-2">
+            <button
+              onClick={() => onNavigate('home')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                currentView === 'home'
+                  ? 'bg-neutral-900 text-white border border-neutral-700'
+                  : 'text-neutral-400 hover:text-white hover:bg-neutral-900/60'
+              }`}
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Arama Engine</span>
+            </button>
+
+            <button
+              onClick={() => onNavigate('all-animes')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                currentView === 'all-animes'
+                  ? 'bg-neutral-900 text-white border border-neutral-700'
+                  : 'text-neutral-400 hover:text-white hover:bg-neutral-900/60'
+              }`}
+            >
+              <Film className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Katalog</span>
+            </button>
+
+            <button
+              onClick={() => onNavigate('history')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                currentView === 'history'
+                  ? 'bg-neutral-900 text-white border border-neutral-700'
+                  : 'text-neutral-400 hover:text-white hover:bg-neutral-900/60'
+              }`}
+            >
+              <History className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">İzlenenler</span>
+            </button>
+
+            <button
+              onClick={() => onNavigate('favorites')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                currentView === 'favorites'
+                  ? 'bg-neutral-900 text-white border border-neutral-700'
+                  : 'text-neutral-400 hover:text-white hover:bg-neutral-900/60'
+              }`}
+            >
+              <Heart className="w-3.5 h-3.5 text-rose-500" />
+              <span className="hidden sm:inline">Favoriler</span>
+            </button>
+          </nav>
+
+          {/* API Status Badge */}
+          <div className="hidden lg:flex items-center gap-2 pl-3 border-l border-[#1f1f1f] text-[11px] font-mono">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-neutral-400">
+              {animeCount > 0 ? `${animeCount} Anime` : 'API Online'}
+            </span>
+          </div>
+
+        </div>
+      </div>
+    </header>
+  );
+};
