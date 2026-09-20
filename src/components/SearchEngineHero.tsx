@@ -11,14 +11,16 @@ interface SearchEngineHeroProps {
 }
 
 const POPULAR_SEARCHES = [
-  { slug: 'solo-leveling', title: 'Solo Leveling' },
-  { slug: 'jujutsu-kaisen-s2', title: 'Jujutsu Kaisen 2' },
-  { slug: 'demon-slayer-hashira', title: 'Demon Slayer: Hashira' },
+  { slug: 'jujutsu-kaisen', title: 'Jujutsu Kaisen' },
+  { slug: 'jujutsu-kaisen-2nd-season', title: 'Jujutsu Kaisen 2' },
   { slug: 'sousou-no-frieren', title: 'Sousou no Frieren' },
   { slug: 'shingeki-no-kyojin', title: 'Attack on Titan' },
   { slug: 'chainsaw-man', title: 'Chainsaw Man' },
-  { slug: 'naruto-shippuuden', title: 'Naruto Shippuuden' },
-  { slug: 'one-piece', title: 'One Piece' }
+  { slug: 'naruto', title: 'Naruto' },
+  { slug: 'one-piece', title: 'One Piece' },
+  { slug: 'bleach', title: 'Bleach' },
+  { slug: 'death-note', title: 'Death Note' },
+  { slug: 'hunter-x-hunter-2011', title: 'Hunter x Hunter' }
 ];
 
 export const SearchEngineHero: React.FC<SearchEngineHeroProps> = ({
@@ -67,7 +69,7 @@ export const SearchEngineHero: React.FC<SearchEngineHeroProps> = ({
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Anime ismi ara (örn: Solo Leveling, Naruto, Jujutsu Kaisen)..."
+              placeholder="Anime ismi ara (örn: Jujutsu Kaisen, Naruto, Frieren, One Piece)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-transparent text-sm sm:text-base text-white placeholder-neutral-500 pl-2 pr-10 py-1.5 focus:outline-none font-sans"
