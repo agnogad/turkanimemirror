@@ -15,7 +15,9 @@ import {
   Search,
   Star,
   X,
-  Check
+  Check,
+  Users,
+  Layers
 } from 'lucide-react';
 import {
   fetchEpisodePlayers,
@@ -63,16 +65,31 @@ export const WatchPlayer: React.FC<WatchPlayerProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isTheaterMode, setIsTheaterMode] = useState(false);
 
-  // Custom Searchable Selector state
-  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
-  const [selectorSearch, setSelectorSearch] = useState('');
-  const selectorRef = useRef<HTMLDivElement>(null);
+  // Filter States
+  const [selectedFansub, setSelectedFansub] = useState<string>('ALL');
+  const [selectedProvider, setSelectedProvider] = useState<string>('ALL');
 
-  // Close custom selector on outside click
+  // Custom Dropdown Open States & Refs
+  const [isPlayerSelectorOpen, setIsPlayerSelectorOpen] = useState(false);
+  const [isFansubSelectorOpen, setIsFansubSelectorOpen] = useState(false);
+  const [isProviderSelectorOpen, setIsProviderSelectorOpen] = useState(false);
+  const [selectorSearch, setSelectorSearch] = useState('');
+
+  const playerSelectorRef = useRef<HTMLDivElement>(null);
+  const fansubSelectorRef = useRef<HTMLDivElement>(null);
+  const providerSelectorRef = useRef<HTMLDivElement>(null);
+
+  // Close custom selectors on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (selectorRef.current && !selectorRef.current.contains(e.target as Node)) {
-        setIsSelectorOpen(false);
+      if (playerSelectorRef.current && !playerSelectorRef.current.contains(e.target as Node)) {
+        setIsPlayerSelectorOpen(false);
+      }
+      if (fansubSelectorRef.current && !fansubSelectorRef.current.contains(e.target as Node)) {
+        setIsFansubSelectorOpen(false);
+      }
+      if (providerSelectorRef.current && !providerSelectorRef.current.contains(e.target as Node)) {
+        setIsProviderSelectorOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -108,6 +125,8 @@ export const WatchPlayer: React.FC<WatchPlayerProps> = ({
 
         setPlayers(sortedPlayers);
         setActivePlayerIndex(0);
+        setSelectedFansub('ALL');
+        setSelectedProvider('ALL');
         setIsLoading(false);
 
         // Save progress to history
@@ -143,10 +162,27 @@ export const WatchPlayer: React.FC<WatchPlayerProps> = ({
   const prevEpisode = episodeIndex > 0 ? episodes[episodeIndex - 1] : null;
   const nextEpisode = episodeIndex < episodes.length - 1 ? episodes[episodeIndex + 1] : null;
 
-  const activePlayer = players[activePlayerIndex];
+  // Unique Fansubs & Providers list for filter dropdowns
+  const uniqueFansubs = Array.from(
+    new Set(players.map((p) => p.fansub).filter(Boolean))
+  ) as string[];
 
-  // Filter players inside custom selector menu
-  const filteredPlayers = players.filter((p) => {
+  const uniqueProviders = Array.from(
+    new Set(players.map((p) => p.player).filter(Boolean))
+  ) as string[];
+
+  // Players filtered by Fansub and Provider criteria
+  const availablePlayers = players.filter((p) => {
+    const matchesFansub = selectedFansub === 'ALL' || p.fansub === selectedFansub;
+    const matchesProvider = selectedProvider === 'ALL' || p.player === selectedProvider;
+    return matchesFansub && matchesProvider;
+  });
+
+  // Active player object
+  const activePlayer = availablePlayers[activePlayerIndex] || availablePlayers[0] || players[0];
+
+  // Players filtered by search term in main custom player selector
+  const searchedPlayers = availablePlayers.filter((p) => {
     if (!selectorSearch.trim()) return true;
     const term = selectorSearch.toLowerCase();
     return (
@@ -204,11 +240,11 @@ export const WatchPlayer: React.FC<WatchPlayerProps> = ({
       {/* Main Video Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-2">
         
-        {/* Vercel Custom Searchable Selector Box */}
-        <div className="bg-[#0a0a0a] border border-[#1f1f1f] rounded-t-xl p-3 sm:p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            
-            {/* Title & Info */}
+        {/* Vercel Custom Control Header Box */}
+        <div className="bg-[#0a0a0a] border border-[#1f1f1f] rounded-t-xl p-3 sm:p-4 space-y-3">
+          
+          {/* Header Row: Title & Info */}
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded bg-neutral-900 border border-neutral-800 flex items-center justify-center text-white shrink-0">
                 <Radio className="w-3.5 h-3.5 text-emerald-500" />
@@ -219,23 +255,181 @@ export const WatchPlayer: React.FC<WatchPlayerProps> = ({
                     Oynatıcı Sunucusu
                   </span>
                   <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
-                    {players.length} HTTPS Kaynak
+                    {availablePlayers.length} / {players.length} HTTPS Kaynak
                   </span>
                 </div>
                 <p className="text-[11px] font-mono text-neutral-500 hidden sm:block">
-                  ★ Sibnet, Voe ve Dailymotion öncelikli listelenir
+                  ★ Sibnet, Voe ve Dailymotion öncelikli • Özel filtreli arama seçici
                 </p>
               </div>
             </div>
+          </div>
 
-            {/* CUSTOM SEARCHABLE SELECTOR DROPDOWN */}
-            <div ref={selectorRef} className="relative w-full sm:w-80">
-              
-              {/* Trigger Button */}
+          {/* Controls Grid: 3 Custom Selectors (Fansub, Provider, Player Selector) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 border-t border-[#1a1a1a]">
+            
+            {/* 1. CUSTOM FANSUB FILTER SELECTOR */}
+            <div ref={fansubSelectorRef} className="relative">
+              <label className="block text-[10px] font-mono text-neutral-500 mb-1 uppercase tracking-wider">
+                Fansub Filtresi:
+              </label>
               <button
                 type="button"
-                onClick={() => setIsSelectorOpen(!isSelectorOpen)}
-                disabled={players.length === 0}
+                onClick={() => {
+                  setIsFansubSelectorOpen(!isFansubSelectorOpen);
+                  setIsProviderSelectorOpen(false);
+                  setIsPlayerSelectorOpen(false);
+                }}
+                className="w-full flex items-center justify-between bg-[#141414] hover:bg-[#1a1a1a] text-white text-xs font-mono font-bold py-2 px-3 rounded-lg border border-[#262626] focus:border-white transition-all shadow-sm"
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <Users className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                  <span className="truncate">
+                    {selectedFansub === 'ALL' ? 'Tüm Fansublar' : selectedFansub}
+                  </span>
+                </div>
+                <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${isFansubSelectorOpen ? 'rotate-180 text-white' : ''}`} />
+              </button>
+
+              {isFansubSelectorOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[#0a0a0a] border border-[#262626] rounded-xl shadow-2xl z-50 overflow-hidden text-xs font-mono backdrop-blur-2xl py-1">
+                  <div
+                    onClick={() => {
+                      setSelectedFansub('ALL');
+                      setActivePlayerIndex(0);
+                      setIsFansubSelectorOpen(false);
+                    }}
+                    className={`flex items-center justify-between px-3 py-2 cursor-pointer transition-colors ${
+                      selectedFansub === 'ALL'
+                        ? 'bg-white text-black font-bold'
+                        : 'text-neutral-300 hover:bg-[#171717] hover:text-white'
+                    }`}
+                  >
+                    <span>Tüm Fansublar ({players.length})</span>
+                    {selectedFansub === 'ALL' && <Check className="w-3.5 h-3.5 text-black" />}
+                  </div>
+                  {uniqueFansubs.map((sub) => {
+                    const count = players.filter((p) => p.fansub === sub).length;
+                    const isSelected = selectedFansub === sub;
+                    return (
+                      <div
+                        key={`fansub-opt-${sub}`}
+                        onClick={() => {
+                          setSelectedFansub(sub);
+                          setActivePlayerIndex(0);
+                          setIsFansubSelectorOpen(false);
+                        }}
+                        className={`flex items-center justify-between px-3 py-2 cursor-pointer transition-colors ${
+                          isSelected
+                            ? 'bg-white text-black font-bold'
+                            : 'text-neutral-300 hover:bg-[#171717] hover:text-white'
+                        }`}
+                      >
+                        <span className="truncate">{sub}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[10px] ${isSelected ? 'text-neutral-700' : 'text-neutral-500'}`}>
+                            ({count})
+                          </span>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-black" />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* 2. CUSTOM PROVIDER (SAĞLAYICI) FILTER SELECTOR */}
+            <div ref={providerSelectorRef} className="relative">
+              <label className="block text-[10px] font-mono text-neutral-500 mb-1 uppercase tracking-wider">
+                Sağlayıcı Filtresi:
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsProviderSelectorOpen(!isProviderSelectorOpen);
+                  setIsFansubSelectorOpen(false);
+                  setIsPlayerSelectorOpen(false);
+                }}
+                className="w-full flex items-center justify-between bg-[#141414] hover:bg-[#1a1a1a] text-white text-xs font-mono font-bold py-2 px-3 rounded-lg border border-[#262626] focus:border-white transition-all shadow-sm"
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <Layers className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                  <span className="truncate">
+                    {selectedProvider === 'ALL' ? 'Tüm Sağlayıcılar' : selectedProvider}
+                  </span>
+                </div>
+                <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${isProviderSelectorOpen ? 'rotate-180 text-white' : ''}`} />
+              </button>
+
+              {isProviderSelectorOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[#0a0a0a] border border-[#262626] rounded-xl shadow-2xl z-50 overflow-hidden text-xs font-mono backdrop-blur-2xl py-1 max-h-60 overflow-y-auto">
+                  <div
+                    onClick={() => {
+                      setSelectedProvider('ALL');
+                      setActivePlayerIndex(0);
+                      setIsProviderSelectorOpen(false);
+                    }}
+                    className={`flex items-center justify-between px-3 py-2 cursor-pointer transition-colors ${
+                      selectedProvider === 'ALL'
+                        ? 'bg-white text-black font-bold'
+                        : 'text-neutral-300 hover:bg-[#171717] hover:text-white'
+                    }`}
+                  >
+                    <span>Tüm Sağlayıcılar ({players.length})</span>
+                    {selectedProvider === 'ALL' && <Check className="w-3.5 h-3.5 text-black" />}
+                  </div>
+                  {uniqueProviders.map((prov) => {
+                    const count = players.filter((p) => p.player === prov).length;
+                    const isSelected = selectedProvider === prov;
+                    const isStarred = isPriorityPlayer(prov);
+
+                    return (
+                      <div
+                        key={`prov-opt-${prov}`}
+                        onClick={() => {
+                          setSelectedProvider(prov);
+                          setActivePlayerIndex(0);
+                          setIsProviderSelectorOpen(false);
+                        }}
+                        className={`flex items-center justify-between px-3 py-2 cursor-pointer transition-colors ${
+                          isSelected
+                            ? 'bg-white text-black font-bold'
+                            : 'text-neutral-300 hover:bg-[#171717] hover:text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {isStarred && (
+                            <Star className={`w-3 h-3 shrink-0 ${isSelected ? 'text-amber-600 fill-amber-600' : 'text-amber-400 fill-amber-400'}`} />
+                          )}
+                          <span className="truncate">{prov}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[10px] ${isSelected ? 'text-neutral-700' : 'text-neutral-500'}`}>
+                            ({count})
+                          </span>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-black" />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* 3. MAIN CUSTOM SEARCHABLE PLAYER SELECTOR */}
+            <div ref={playerSelectorRef} className="relative">
+              <label className="block text-[10px] font-mono text-neutral-500 mb-1 uppercase tracking-wider">
+                Aktif Sunucu ({availablePlayers.length}):
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPlayerSelectorOpen(!isPlayerSelectorOpen);
+                  setIsFansubSelectorOpen(false);
+                  setIsProviderSelectorOpen(false);
+                }}
+                disabled={availablePlayers.length === 0}
                 className="w-full flex items-center justify-between bg-[#141414] hover:bg-[#1a1a1a] text-white text-xs font-mono font-bold py-2 px-3 rounded-lg border border-[#262626] focus:border-white transition-all shadow-sm disabled:opacity-50"
               >
                 <div className="flex items-center gap-2 min-w-0">
@@ -253,15 +447,15 @@ export const WatchPlayer: React.FC<WatchPlayerProps> = ({
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0 ml-2 text-neutral-400">
-                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isSelectorOpen ? 'rotate-180 text-white' : ''}`} />
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isPlayerSelectorOpen ? 'rotate-180 text-white' : ''}`} />
                 </div>
               </button>
 
-              {/* Dropdown Menu Panel */}
-              {isSelectorOpen && (
-                <div className="absolute top-full right-0 left-0 mt-1.5 bg-[#0a0a0a] border border-[#262626] rounded-xl shadow-2xl z-50 overflow-hidden text-xs font-mono backdrop-blur-2xl">
+              {/* Dropdown Menu Panel with Search Input */}
+              {isPlayerSelectorOpen && (
+                <div className="absolute top-full right-0 left-0 mt-1 bg-[#0a0a0a] border border-[#262626] rounded-xl shadow-2xl z-50 overflow-hidden text-xs font-mono backdrop-blur-2xl">
                   
-                  {/* Search Input Box */}
+                  {/* Search Input Box inside Selector */}
                   <div className="p-2 border-b border-[#1f1f1f] relative flex items-center">
                     <Search className="w-3.5 h-3.5 text-neutral-500 absolute left-3.5" />
                     <input
@@ -284,10 +478,9 @@ export const WatchPlayer: React.FC<WatchPlayerProps> = ({
 
                   {/* Options List */}
                   <div className="max-h-60 overflow-y-auto p-1 space-y-0.5">
-                    {filteredPlayers.length > 0 ? (
-                      filteredPlayers.map((p) => {
-                        // Original index in the main players array
-                        const originalIndex = players.indexOf(p);
+                    {searchedPlayers.length > 0 ? (
+                      searchedPlayers.map((p) => {
+                        const originalIndex = availablePlayers.indexOf(p);
                         const isSelected = activePlayerIndex === originalIndex;
                         const isStarred = isPriorityPlayer(p.player);
 
@@ -296,7 +489,7 @@ export const WatchPlayer: React.FC<WatchPlayerProps> = ({
                             key={`custom-opt-${p.player}-${originalIndex}`}
                             onClick={() => {
                               setActivePlayerIndex(originalIndex);
-                              setIsSelectorOpen(false);
+                              setIsPlayerSelectorOpen(false);
                               setSelectorSearch('');
                             }}
                             className={`flex items-center justify-between p-2 rounded-md cursor-pointer transition-colors ${
@@ -341,7 +534,7 @@ export const WatchPlayer: React.FC<WatchPlayerProps> = ({
                       })
                     ) : (
                       <div className="py-6 text-center text-neutral-500 text-xs">
-                        "{selectorSearch}" ile eşleşen sunucu yok.
+                        Filtreye uygun sunucu bulunamadı.
                       </div>
                     )}
                   </div>
@@ -379,7 +572,7 @@ export const WatchPlayer: React.FC<WatchPlayerProps> = ({
                   HTTPS Oynatıcı Bulunamadı
                 </h4>
                 <p className="text-xs text-neutral-400 mt-1 leading-relaxed">
-                  Bu bölüm için direkt olarak oynatılabilecek güvenli HTTPS embed kaynağı mevcut değil. Diğer bölümleri deneyebilirsiniz.
+                  Bu filtreye veya bölüme ait direkt oynatılabilecek güvenli HTTPS embed kaynağı bulunamadı. Filtreleri temizleyebilirsiniz.
                 </p>
               </div>
             </div>
