@@ -5,6 +5,7 @@ import { RecentlyWatchedSection } from './components/RecentlyWatchedSection';
 import { AnimeDetail } from './components/AnimeDetail';
 import { WatchPlayer } from './components/WatchPlayer';
 import { Footer } from './components/Footer';
+import { AniListCover } from './components/AniListCover';
 import { fetchAnimeList, slugToTitle } from './services/api';
 import { getWatchHistory, getFavorites, toggleFavorite, clearWatchHistory } from './utils/storage';
 import type { WatchHistoryItem } from './utils/storage';
@@ -13,8 +14,8 @@ import { Film, Heart, History, Trash2, Play, Loader2 } from 'lucide-react';
 export function App() {
   // Navigation State
   const [currentView, setCurrentView] = useState<'home' | 'detail' | 'watch' | 'all-animes' | 'history' | 'favorites'>('home');
-  const [selectedAnimeSlug, setSelectedAnimeSlug] = useState<string>('solo-leveling');
-  const [selectedEpisodeSlug, setSelectedEpisodeSlug] = useState<string>('solo-leveling-ep-1');
+  const [selectedAnimeSlug, setSelectedAnimeSlug] = useState<string>('jujutsu-kaisen');
+  const [selectedEpisodeSlug, setSelectedEpisodeSlug] = useState<string>('jujutsu-kaisen-1-bolum');
 
   // API Data & Search State
   const [allAnimeSlugs, setAllAnimeSlugs] = useState<string[]>([]);
@@ -172,7 +173,7 @@ export function App() {
                   <Film className="w-6 h-6 text-white" /> Tüm Animeler Kataloğu
                 </h1>
                 <p className="text-xs font-mono text-neutral-400 mt-1">
-                  TurkAnimeTV Arşivindeki tüm {allAnimeSlugs.length} anime başlığı
+                  AniList afiş kapakları ile TurkAnimeTV arşivindeki tüm {allAnimeSlugs.length} anime
                 </p>
               </div>
             </div>
@@ -185,26 +186,43 @@ export function App() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {currentCatalogSlugs.map((slug) => {
                     const title = slugToTitle(slug);
+                    const isFav = favorites.includes(slug);
                     return (
                       <div
                         key={slug}
                         onClick={() => handleSelectAnime(slug)}
-                        className="p-4 rounded-lg bg-[#0a0a0a] border border-[#1f1f1f] hover:border-white transition-all cursor-pointer flex flex-col justify-between group"
+                        className="group relative bg-[#0a0a0a] border border-[#1f1f1f] hover:border-white rounded-lg overflow-hidden transition-all cursor-pointer flex flex-col justify-between shadow-lg"
                       >
-                        <div>
-                          <div className="w-7 h-7 rounded bg-neutral-900 border border-neutral-800 text-neutral-400 flex items-center justify-center text-xs font-mono font-bold mb-3 group-hover:bg-white group-hover:text-black transition-colors">
-                            ▲
-                          </div>
-                          <h3 className="text-xs font-bold text-white group-hover:text-neutral-200 line-clamp-2">
+                        {/* AniList Cover Aspect Poster Box */}
+                        <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#121212]">
+                          <AniListCover slug={slug} alt={title} />
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-80 group-hover:opacity-40 transition-opacity" />
+
+                          {/* Favorite Pill Button */}
+                          <button
+                            onClick={(e) => handleToggleFav(e, slug)}
+                            className={`absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-md transition-all ${
+                              isFav
+                                ? 'bg-rose-600 text-white shadow-md'
+                                : 'bg-black/60 text-neutral-400 hover:text-rose-400 hover:scale-110'
+                            }`}
+                          >
+                            <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-white' : ''}`} />
+                          </button>
+                        </div>
+
+                        {/* Title Info */}
+                        <div className="p-3">
+                          <h3 className="text-xs font-bold text-white group-hover:text-neutral-200 line-clamp-1">
                             {title}
                           </h3>
+                          <span className="text-[10px] font-mono text-neutral-500 mt-1 block truncate">
+                            {slug}
+                          </span>
                         </div>
-                        <span className="text-[10px] font-mono text-neutral-500 mt-3 block truncate">
-                          slug: {slug}
-                        </span>
                       </div>
                     );
                   })}
@@ -278,33 +296,40 @@ export function App() {
                     <div
                       key={`${item.animeId}-${item.episodeId}`}
                       onClick={() => handleWatchEpisode(item.animeId, item.episodeId)}
-                      className="group bg-[#0a0a0a] border border-[#1f1f1f] hover:border-white rounded-lg p-4 cursor-pointer transition-all flex flex-col justify-between"
+                      className="group bg-[#0a0a0a] border border-[#1f1f1f] hover:border-white rounded-lg p-3 cursor-pointer transition-all flex gap-3 shadow-lg"
                     >
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-900 border border-neutral-800 text-white font-bold">
-                            {item.episodeNumber}. Bölüm
-                          </span>
-                          <span className="text-[10px] font-mono text-neutral-500">
-                            %{percentage}
-                          </span>
-                        </div>
-
-                        <h3 className="text-sm font-bold text-white group-hover:text-neutral-200 truncate">
-                          {item.animeTitle}
-                        </h3>
+                      {/* AniList Cover thumbnail */}
+                      <div className="w-20 aspect-[3/4] rounded bg-[#121212] overflow-hidden shrink-0 border border-[#262626]">
+                        <AniListCover slug={item.animeId} alt={item.animeTitle} />
                       </div>
 
-                      <div className="mt-4 pt-3 border-t border-[#1f1f1f]">
-                        <div className="w-full bg-neutral-900 h-1 rounded-full overflow-hidden mb-3">
-                          <div
-                            className="bg-white h-full rounded-full"
-                            style={{ width: `${percentage}%` }}
-                          />
+                      <div className="flex-1 flex flex-col justify-between min-w-0">
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-neutral-900 border border-neutral-800 text-white font-bold">
+                              {item.episodeNumber}. Bölüm
+                            </span>
+                            <span className="text-[10px] font-mono text-neutral-500">
+                              %{percentage}
+                            </span>
+                          </div>
+
+                          <h3 className="text-xs font-bold text-white group-hover:text-neutral-200 truncate">
+                            {item.animeTitle}
+                          </h3>
                         </div>
-                        <button className="w-full py-1.5 rounded bg-white text-black font-mono text-xs font-bold flex items-center justify-center gap-1.5">
-                          <Play className="w-3.5 h-3.5 fill-black" /> İzlemeye Devam Et
-                        </button>
+
+                        <div className="pt-2 border-t border-[#1f1f1f]">
+                          <div className="w-full bg-neutral-900 h-1 rounded-full overflow-hidden mb-2">
+                            <div
+                              className="bg-white h-full rounded-full"
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                          <button className="w-full py-1 rounded bg-white text-black font-mono text-[11px] font-bold flex items-center justify-center gap-1">
+                            <Play className="w-3 h-3 fill-black" /> Devam Et
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
@@ -336,31 +361,44 @@ export function App() {
                 <Heart className="w-6 h-6 text-rose-500 fill-rose-500" /> Favori Animelerim
               </h1>
               <p className="text-xs font-mono text-neutral-400 mt-1">
-                Favorilerinize eklediğiniz animeler ({favorites.length} Anime)
+                AniList kapak afişleriyle favorilerinize eklediğiniz animeler ({favorites.length} Anime)
               </p>
             </div>
 
             {favorites.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {favorites.map((slug) => {
                   const title = slugToTitle(slug);
                   return (
                     <div
                       key={slug}
                       onClick={() => handleSelectAnime(slug)}
-                      className="p-4 rounded-lg bg-[#0a0a0a] border border-[#1f1f1f] hover:border-white transition-all cursor-pointer flex flex-col justify-between group"
+                      className="group relative bg-[#0a0a0a] border border-[#1f1f1f] hover:border-white rounded-lg overflow-hidden transition-all cursor-pointer flex flex-col justify-between shadow-lg"
                     >
-                      <div>
-                        <div className="w-7 h-7 rounded bg-neutral-900 border border-neutral-800 text-rose-500 flex items-center justify-center text-xs font-mono font-bold mb-3">
-                          <Heart className="w-4 h-4 fill-rose-500" />
-                        </div>
-                        <h3 className="text-xs font-bold text-white group-hover:text-neutral-200 line-clamp-2">
+                      {/* AniList Cover Aspect Poster Box */}
+                      <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#121212]">
+                        <AniListCover slug={slug} alt={title} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-80 group-hover:opacity-40 transition-opacity" />
+
+                        {/* Favorite Button */}
+                        <button
+                          onClick={(e) => handleToggleFav(e, slug)}
+                          className="absolute top-2 right-2 p-1.5 rounded-full bg-rose-600 text-white shadow-md backdrop-blur-md"
+                          title="Favorilerden Çıkar"
+                        >
+                          <Heart className="w-3.5 h-3.5 fill-white" />
+                        </button>
+                      </div>
+
+                      {/* Title Info */}
+                      <div className="p-3">
+                        <h3 className="text-xs font-bold text-white group-hover:text-neutral-200 line-clamp-1">
                           {title}
                         </h3>
+                        <span className="text-[10px] font-mono text-neutral-500 mt-1 block truncate">
+                          {slug}
+                        </span>
                       </div>
-                      <span className="text-[10px] font-mono text-neutral-500 mt-3 block truncate">
-                        slug: {slug}
-                      </span>
                     </div>
                   );
                 })}

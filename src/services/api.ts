@@ -9,6 +9,19 @@ export interface AnimeInfo {
   Puanı?: number;
   Özet?: string;
   Resim?: string;
+  Banner?: string;
+}
+
+export interface AniListMedia {
+  title?: {
+    romaji?: string;
+    english?: string;
+  };
+  coverImage?: {
+    extraLarge?: string;
+    large?: string;
+  };
+  bannerImage?: string;
 }
 
 export type EpisodeTuple = [string, string]; // [episodeSlug, episodeTitle]
@@ -23,10 +36,11 @@ export interface PlayerSource {
 
 const BASE_URL = 'https://raw.githubusercontent.com/agnogad/TurkAnimeTV_Arsiv_json/main/animeler';
 
-// Cache map to avoid redundant network requests
+// In-memory cache maps
 const infoCache = new Map<string, AnimeInfo>();
 const episodesCache = new Map<string, EpisodeTuple[]>();
 const playerCache = new Map<string, PlayerSource[]>();
+const aniListCache = new Map<string, AniListMedia | null>();
 
 // Format slug to readable title e.g. "solo-leveling-season-2" -> "Solo Leveling Season 2"
 export const slugToTitle = (slug: string): string => {
@@ -35,6 +49,77 @@ export const slugToTitle = (slug: string): string => {
     .split('-')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+};
+
+/**
+ * Fetch anime cover image & banner directly from AniList GraphQL API
+ */
+export const fetchAniListMedia = async (searchTerm: string): Promise<AniListMedia | null> => {
+  if (!searchTerm) return null;
+  const cleanTerm = searchTerm.trim();
+
+  if (aniListCache.has(cleanTerm)) {
+    return aniListCache.get(cleanTerm)!;
+  }
+
+  // Check localStorage cache to speed up repeated queries across sessions
+  const storageKey = `anilist_cover_${cleanTerm.toLowerCase()}`;
+  try {
+    const cached = localStorage.getItem(storageKey);
+    if (cached) {
+      const parsed: AniListMedia = JSON.parse(cached);
+      aniListCache.set(cleanTerm, parsed);
+      return parsed;
+    }
+  } catch (e) {
+    // Ignore localStorage errors
+  }
+
+  const query = `
+    query ($search: String) {
+      Media(search: $search, type: ANIME) {
+        title {
+          romaji
+          english
+        }
+        coverImage {
+          extraLarge
+          large
+        }
+        bannerImage
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch('https://graphql.anilist.co/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        query,
+        variables: { search: cleanTerm },
+      }),
+    });
+
+    if (!response.ok) throw new Error(`AniList HTTP status ${response.status}`);
+    const json = await response.json();
+    const media: AniListMedia | null = json?.data?.Media || null;
+
+    aniListCache.set(cleanTerm, media);
+    if (media) {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(media));
+      } catch (e) {}
+    }
+    return media;
+  } catch (err) {
+    console.error(`AniList fetch error for "${cleanTerm}":`, err);
+    aniListCache.set(cleanTerm, null);
+    return null;
+  }
 };
 
 // Fetch full list of anime slugs e.g. ["0-saiji-start-dash-monogatari", ...]
@@ -47,28 +132,39 @@ export const fetchAnimeList = async (): Promise<string[]> => {
   } catch (error) {
     console.error('API Error (fetchAnimeList):', error);
     return [
-      'solo-leveling',
-      'jujutsu-kaisen-s2',
-      'demon-slayer-hashira',
+      'jujutsu-kaisen',
+      'jujutsu-kaisen-2nd-season',
       'sousou-no-frieren',
       'shingeki-no-kyojin',
       'chainsaw-man',
-      'naruto-shippuuden',
+      'naruto',
       'one-piece',
+      'bleach',
       'death-note',
-      'bleach'
+      'hunter-x-hunter-2011'
     ];
   }
 };
 
-// Fetch info metadata for a single anime slug
+// Fetch info metadata for a single anime slug, automatically populated with AniList cover image & banner
 export const fetchAnimeInfo = async (slug: string): Promise<AnimeInfo | null> => {
   if (infoCache.has(slug)) return infoCache.get(slug)!;
 
   try {
     const res = await fetch(`${BASE_URL}/${slug}/info.json`);
-    if (!res.ok) throw new Error(`Info not found for ${slug}`);
-    const data: AnimeInfo = await res.json();
+    let data: AnimeInfo = res.ok ? await res.json() : {};
+
+    // Fetch high quality cover image from AniList GraphQL
+    const searchTitle = slugToTitle(slug);
+    const aniListMedia = await fetchAniListMedia(searchTitle);
+
+    if (aniListMedia?.coverImage?.extraLarge || aniListMedia?.coverImage?.large) {
+      data.Resim = aniListMedia.coverImage.extraLarge || aniListMedia.coverImage.large;
+    }
+    if (aniListMedia?.bannerImage) {
+      data.Banner = aniListMedia.bannerImage;
+    }
+
     infoCache.set(slug, data);
     return data;
   } catch (error) {

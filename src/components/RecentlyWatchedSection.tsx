@@ -2,6 +2,7 @@ import React from 'react';
 import { History, Play, Trash2, Clock, ChevronRight } from 'lucide-react';
 import type { WatchHistoryItem } from '../utils/storage';
 import { clearWatchHistory, removeHistoryItem } from '../utils/storage';
+import { AniListCover } from './AniListCover';
 
 interface RecentlyWatchedProps {
   history: WatchHistoryItem[];
@@ -92,44 +93,50 @@ export const RecentlyWatchedSection: React.FC<RecentlyWatchedProps> = ({
               <div
                 key={`${item.animeId}-${item.episodeId}`}
                 onClick={() => onWatchEpisode(item.animeId, item.episodeId)}
-                className="group relative bg-[#121212] rounded-lg border border-[#1f1f1f] hover:border-neutral-500 transition-all p-4 cursor-pointer flex flex-col justify-between"
+                className="group relative bg-[#121212] rounded-lg border border-[#1f1f1f] hover:border-neutral-500 transition-all p-3 cursor-pointer flex gap-3 shadow-lg"
               >
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-900 border border-neutral-800 text-neutral-300 font-bold">
-                      {item.episodeNumber}. Bölüm
-                    </span>
-                    <button
-                      onClick={(e) => handleRemoveSingle(e, item)}
-                      className="p-1 text-neutral-500 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  <h4 className="text-sm font-bold text-white group-hover:text-neutral-200 truncate">
-                    {item.animeTitle}
-                  </h4>
-
-                  <div className="flex items-center gap-2 mt-1.5 text-[11px] text-neutral-400 font-mono">
-                    <Clock className="w-3 h-3 text-neutral-500" />
-                    <span>{minutesLeft} dk kaldı</span>
-                    <span>•</span>
-                    <span>%{percentage}</span>
-                  </div>
+                {/* AniList Cover Poster */}
+                <div className="w-16 aspect-[3/4] rounded bg-[#0a0a0a] overflow-hidden shrink-0 border border-[#262626]">
+                  <AniListCover slug={item.animeId} alt={item.animeTitle} />
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-[#1f1f1f]">
-                  <div className="w-full bg-neutral-900 h-1 rounded-full overflow-hidden mb-3">
-                    <div
-                      className="bg-white h-full rounded-full transition-all"
-                      style={{ width: `${percentage}%` }}
-                    />
+                <div className="flex-1 flex flex-col justify-between min-w-0">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-neutral-900 border border-neutral-800 text-neutral-300 font-bold">
+                        {item.episodeNumber}. Bölüm
+                      </span>
+                      <button
+                        onClick={(e) => handleRemoveSingle(e, item)}
+                        className="p-0.5 text-neutral-500 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <h4 className="text-xs font-bold text-white group-hover:text-neutral-200 truncate">
+                      {item.animeTitle}
+                    </h4>
+
+                    <div className="flex items-center gap-1.5 mt-1 text-[10px] text-neutral-400 font-mono">
+                      <Clock className="w-3 h-3 text-neutral-500" />
+                      <span>{minutesLeft} dk kaldı</span>
+                      <span>•</span>
+                      <span>%{percentage}</span>
+                    </div>
                   </div>
-                  <button className="w-full py-1.5 rounded bg-white text-black group-hover:bg-neutral-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors">
-                    <Play className="w-3.5 h-3.5 fill-black" />
-                    Devam Et
-                  </button>
+
+                  <div className="pt-2 border-t border-[#1f1f1f]">
+                    <div className="w-full bg-neutral-900 h-1 rounded-full overflow-hidden mb-2">
+                      <div
+                        className="bg-white h-full rounded-full transition-all"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                    <button className="w-full py-1 rounded bg-white text-black group-hover:bg-neutral-200 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors">
+                      <Play className="w-3 h-3 fill-black" /> Devam Et
+                    </button>
+                  </div>
                 </div>
               </div>
             );
