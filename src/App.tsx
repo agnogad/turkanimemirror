@@ -7,6 +7,9 @@ import { AnimeDetail } from './components/AnimeDetail';
 import { WatchPlayer } from './components/WatchPlayer';
 import { Footer } from './components/Footer';
 import { AniListCover } from './components/AniListCover';
+import { MirrorNoticeBar } from './components/MirrorNoticeBar';
+import { OfflineBanner } from './components/OfflineBanner';
+import { MirrorModal } from './components/MirrorModal';
 import { fetchAnimeList, slugToTitle } from './services/api';
 import { getWatchHistory, getFavorites, toggleFavorite, clearWatchHistory } from './utils/storage';
 import type { WatchHistoryItem } from './utils/storage';
@@ -17,6 +20,9 @@ export function App() {
   const [currentView, setCurrentView] = useState<'home' | 'detail' | 'watch' | 'all-animes' | 'history' | 'favorites'>('home');
   const [selectedAnimeSlug, setSelectedAnimeSlug] = useState<string>('jujutsu-kaisen');
   const [selectedEpisodeSlug, setSelectedEpisodeSlug] = useState<string>('jujutsu-kaisen-1-bolum');
+
+  // Mirror Modal State
+  const [isMirrorModalOpen, setIsMirrorModalOpen] = useState(false);
 
   // API Data & Search State
   const [allAnimeSlugs, setAllAnimeSlugs] = useState<string[]>([]);
@@ -34,6 +40,11 @@ export function App() {
   // Ref for screen-centered search input focus
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  const refreshStorageState = () => {
+    setHistory(getWatchHistory());
+    setFavorites(getFavorites());
+  };
+
   // Fetch all anime slugs on boot
   useEffect(() => {
     fetchAnimeList().then((slugs) => {
@@ -42,11 +53,6 @@ export function App() {
     });
     refreshStorageState();
   }, []);
-
-  const refreshStorageState = () => {
-    setHistory(getWatchHistory());
-    setFavorites(getFavorites());
-  };
 
   // Filter search results
   const searchResults = searchQuery.trim()
@@ -104,11 +110,18 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-[#000000] text-[#ededed] font-sans flex flex-col justify-between selection:bg-white selection:text-black w-full max-w-full overflow-x-hidden pb-16 md:pb-0">
+      {/* Offline Alert Banner (shown when offline) */}
+      <OfflineBanner />
+
+      {/* Mirror Announcement Bar */}
+      <MirrorNoticeBar />
+
       {/* Top Navbar */}
       <Navbar
         currentView={currentView}
         onNavigate={handleNavigate}
         onFocusSearch={handleFocusSearch}
+        onOpenMirrorModal={() => setIsMirrorModalOpen(true)}
         animeCount={allAnimeSlugs.length}
       />
 
@@ -432,7 +445,16 @@ export function App() {
       />
 
       {/* Footer */}
-      <Footer onNavigate={handleNavigate} />
+      <Footer
+        onNavigate={handleNavigate}
+        onOpenMirrorModal={() => setIsMirrorModalOpen(true)}
+      />
+
+      {/* Mirror Modal */}
+      <MirrorModal
+        isOpen={isMirrorModalOpen}
+        onClose={() => setIsMirrorModalOpen(false)}
+      />
     </div>
   );
 }

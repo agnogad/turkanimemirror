@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="tr" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Çevrimdışı - TurkAnimeMirror</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background-color: #000000;
+        color: #ededed;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        text-align: center;
+      }
+      .card {
+        background: #0a0a0a;
+        border: 1px solid #1f1f1f;
+        border-radius: 12px;
+        padding: 32px 24px;
+        max-width: 520px;
+        width: 100%;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+      }
+      .icon-box {
+        width: 64px;
+        height: 64px;
+        background: #171717;
+        border: 1px solid #262626;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px auto;
+      }
+      .icon-box svg {
+        width: 32px;
+        height: 32px;
+        stroke: #e11d48;
+      }
+      h1 {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: #ffffff;
+      }
+      p {
+        font-size: 13px;
+        color: #a3a3a3;
+        line-height: 1.6;
+        margin-bottom: 24px;
+      }
+      .btn {
+        background: #ffffff;
+        color: #000000;
+        font-weight: 600;
+        font-size: 13px;
+        padding: 10px 20px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .btn:hover {
+        background: #e5e5e5;
+      }
+      .btn:active {
+        transform: scale(0.98);
+      }
+      .mirrors-box {
+        margin-top: 28px;
+        padding-top: 20px;
+        border-top: 1px solid #1f1f1f;
+        text-align: left;
+      }
+      .mirrors-title {
+        font-size: 11px;
+        font-family: monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #a3a3a3;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .mirror-item {
+        background: #121212;
+        border: 1px solid #262626;
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .mirror-info {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .mirror-name {
+        font-size: 11px;
+        font-weight: 600;
+        color: #ededed;
+      }
+      .mirror-url {
+        font-size: 11px;
+        font-family: monospace;
+        color: #3b82f6;
+        text-decoration: none;
+        truncate: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .mirror-url:hover {
+        text-decoration: underline;
+      }
+      .copy-btn {
+        background: #262626;
+        color: #ededed;
+        border: none;
+        padding: 4px 10px;
+        font-size: 10px;
+        font-family: monospace;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.2s;
+        shrink: 0;
+      }
+      .copy-btn:hover {
+        background: #404040;
+      }
+      .status-text {
+        font-size: 11px;
+        font-family: monospace;
+        color: #e11d48;
+        margin-top: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #e11d48;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="icon-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="1" y1="1" x2="23" y2="23"></line>
+          <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+          <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+          <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+          <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+          <line x1="12" y1="20" x2="12.01" y2="20"></line>
+        </svg>
+      </div>
+
+      <h1>İnternet Bağlantısı Bulunamadı</h1>
+      <p>
+        Şu anda çevrimdışısınız veya sunucuya ulaşılamıyor. Daha önce ziyaret ettiğiniz içerikler önbellekten yüklenebilir. Alternatif mirror adreslerimizden erişmeyi de deneyebilirsiniz.
+      </p>
+
+      <button class="btn" onclick="window.location.reload()">
+        🔄 Sayfayı Yeniden Yükle
+      </button>
+
+      <div class="status-text">
+        <span class="dot"></span> Bağlantı bekleniyor...
+      </div>
+
+      <!-- Mirror Links Notice Section -->
+      <div class="mirrors-box">
+        <div class="mirrors-title">
+          🌐 Aktif Mirror (Yedek) Linkleri
+        </div>
+
+        <div class="mirror-item">
+          <div class="mirror-info">
+            <span class="mirror-name">Surge Mirror</span>
+            <a href="https://turkanimemirror.surge.sh/" target="_blank" class="mirror-url">https://turkanimemirror.surge.sh/</a>
+          </div>
+          <button class="copy-btn" onclick="copyUrl('https://turkanimemirror.surge.sh/', this)">Kopyala</button>
+        </div>
+
+        <div class="mirror-item">
+          <div class="mirror-info">
+            <span class="mirror-name">Netlify Mirror</span>
+            <a href="https://turkanimemirror.netlify.app/" target="_blank" class="mirror-url">https://turkanimemirror.netlify.app/</a>
+          </div>
+          <button class="copy-btn" onclick="copyUrl('https://turkanimemirror.netlify.app/', this)">Kopyala</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function copyUrl(text, btn) {
+        navigator.clipboard.writeText(text).then(() => {
+          const original = btn.innerText;
+          btn.innerText = 'Kopyalandı!';
+          setTimeout(() => { btn.innerText = original; }, 2000);
+        });
+      }
+
+      window.addEventListener('online', () => {
+        window.location.reload();
+      });
+    </script>
+  </body>
+</html>

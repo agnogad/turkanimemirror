@@ -1,10 +1,11 @@
 import React from 'react';
-import { Search, Heart, History, Film, Command } from 'lucide-react';
+import { Search, Heart, History, Film, Command, Globe } from 'lucide-react';
 
 interface NavbarProps {
   currentView: string;
   onNavigate: (view: string) => void;
   onFocusSearch: () => void;
+  onOpenMirrorModal?: () => void;
   animeCount: number;
 }
 
@@ -12,6 +13,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentView,
   onNavigate,
   onFocusSearch,
+  onOpenMirrorModal,
   animeCount,
 }) => {
   return (
@@ -97,8 +99,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </nav>
 
-          {/* API Status Badge */}
+          {/* API Status & Mirror Badge */}
           <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-[#1f1f1f] text-[11px] font-mono shrink-0">
+            {onOpenMirrorModal && (
+              <button
+                onClick={onOpenMirrorModal}
+                className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded bg-[#0f141d] border border-blue-900/50 hover:border-blue-500 text-blue-300 hover:text-white transition-colors"
+                title="Mirror (Yedek) Linkleri"
+              >
+                <Globe className="w-3 h-3 text-blue-400" />
+                <span>Aynalar</span>
+              </button>
+            )}
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-neutral-400">
               {animeCount > 0 ? `${animeCount} Anime` : 'API Online'}

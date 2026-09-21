@@ -1,11 +1,13 @@
 import React from 'react';
-import { Heart } from 'lucide-react';
+import { Heart, Globe, ExternalLink } from 'lucide-react';
+import { MIRROR_LINKS } from './MirrorNoticeBar';
 
 interface FooterProps {
   onNavigate: (view: string) => void;
+  onOpenMirrorModal?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenMirrorModal }) => {
   return (
     <footer className="bg-[#000000] border-t border-[#1f1f1f] text-neutral-400 text-xs py-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -29,7 +31,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             </p>
             <div className="flex items-center gap-2 text-[11px] text-emerald-400 font-mono">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>TurkAnimeTV Arşiv API Bağlı</span>
+              <span>TurkAnimeTV Arşiv API & Önbellek Bağlı</span>
             </div>
           </div>
 
@@ -74,16 +76,35 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             </ul>
           </div>
 
-          {/* Architecture */}
+          {/* Mirror Links Notice Column */}
           <div>
-            <h4 className="text-white font-mono font-bold text-xs uppercase tracking-wider mb-3">
-              Teknoloji
+            <h4 className="text-white font-mono font-bold text-xs uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5 text-blue-400" /> Mirror (Ayna) Linkleri
             </h4>
-            <ul className="space-y-1.5 text-[11px] font-mono text-neutral-400">
-              <li>• Vercel Minimal Dark Architecture</li>
-              <li>• React 19 + TypeScript + Tailwind v4</li>
-              <li>• GitHub Raw JSON API integration</li>
-              <li>• Dynamic iframe Embed Players</li>
+            <ul className="space-y-2 text-[11px] font-mono">
+              {MIRROR_LINKS.map((mirror) => (
+                <li key={mirror.url}>
+                  <a
+                    href={mirror.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300 flex items-center gap-1 hover:underline truncate"
+                  >
+                    <span>{mirror.name}</span>
+                    <ExternalLink className="w-3 h-3 opacity-70" />
+                  </a>
+                </li>
+              ))}
+              {onOpenMirrorModal && (
+                <li className="pt-1">
+                  <button
+                    onClick={onOpenMirrorModal}
+                    className="text-neutral-300 hover:text-white underline text-[11px]"
+                  >
+                    Ayna & Çevrimdışı Detayları
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
 
